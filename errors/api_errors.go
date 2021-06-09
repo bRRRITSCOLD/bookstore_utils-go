@@ -10,30 +10,42 @@ type APIError struct {
 }
 
 func NewBadRequestAPIError(message string, err error) *APIError {
-	return &APIError{
+	apiErr := &APIError{
 		Message: message,
 		Status:  http.StatusBadRequest,
 		Error:   "bad_request",
 		Causes:  []interface{}{err.Error()},
 	}
+	if err != nil {
+		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
+	}
+	return apiErr
 }
 
 func NewUnauthorizedAPIError(message string, err error) *APIError {
-	return &APIError{
+	apiErr := &APIError{
 		Message: message,
 		Status:  http.StatusUnauthorized,
 		Error:   "unauthorized",
 		Causes:  []interface{}{err.Error()},
 	}
+	if err != nil {
+		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
+	}
+	return apiErr
 }
 
 func NewNotFoundAPIError(message string, err error) *APIError {
-	return &APIError{
+	apiErr := &APIError{
 		Message: message,
 		Status:  http.StatusNotFound,
 		Error:   "not_found",
 		Causes:  []interface{}{err.Error()},
 	}
+	if err != nil {
+		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
+	}
+	return apiErr
 }
 
 func NewInternalServerAPIError(message string, err error) *APIError {
