@@ -18,6 +18,15 @@ func NewBadRequestAPIError(message string, err error) *APIError {
 	}
 }
 
+func NewUnauthorizedAPIError(message string, err error) *APIError {
+	return &APIError{
+		Message: message,
+		Status:  http.StatusUnauthorized,
+		Error:   "unauthorized",
+		Causes:  []interface{}{err.Error()},
+	}
+}
+
 func NewNotFoundAPIError(message string, err error) *APIError {
 	return &APIError{
 		Message: message,
