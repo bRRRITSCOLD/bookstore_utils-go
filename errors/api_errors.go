@@ -1,61 +1,113 @@
 package errors_utils
 
-import "net/http"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+)
 
-type APIError struct {
-	Message string        `json:"message"`
-	Status  int           `json:"status"`
-	Error   string        `json:"error"`
-	Causes  []interface{} `json:"causes"`
+type APIError interface {
+	Message() string
+	Status() int
+	Error() string
+	Causes() []interface{}
 }
 
-func NewBadRequestAPIError(message string, err error) *APIError {
-	apiErr := &APIError{
-		Message: message,
-		Status:  http.StatusBadRequest,
-		Error:   "bad_request",
-		Causes:  []interface{}{err.Error()},
-	}
-	if err != nil {
-		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
-	}
-	return apiErr
+type apiError struct {
+	message string        `json:"message"`
+	status  int           `json:"status"`
+	error   string        `json:"error"`
+	causes  []interface{} `json:"causes"`
 }
 
-func NewUnauthorizedAPIError(message string, err error) *APIError {
-	apiErr := &APIError{
-		Message: message,
-		Status:  http.StatusUnauthorized,
-		Error:   "unauthorized",
-		Causes:  []interface{}{err.Error()},
-	}
-	if err != nil {
-		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
-	}
-	return apiErr
+func (e apiError) Message() string {
+	return e.message
 }
 
-func NewNotFoundAPIError(message string, err error) *APIError {
-	apiErr := &APIError{
-		Message: message,
-		Status:  http.StatusNotFound,
-		Error:   "not_found",
-		Causes:  []interface{}{err.Error()},
-	}
-	if err != nil {
-		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
-	}
-	return apiErr
+func (e apiError) Status() int {
+	return e.status
 }
 
-func NewInternalServerAPIError(message string, err error) *APIError {
-	apiErr := &APIError{
-		Message: message,
-		Status:  http.StatusInternalServerError,
-		Error:   "internal_server_error",
+func (e apiError) Error() string {
+	return fmt.Sprintf(
+		"message: %s - status: %d - error: %s - causes: %v",
+		e.message,
+		e.status,
+		e.error,
+		e.causes,
+	)
+}
+
+func (e apiError) Causes() []interface{} {
+	return e.causes
+}
+
+func NewAPIErrorFromBytes(bytes []byte) (APIError, error) {
+	var apiErr apiError
+	if err := json.Unmarshal(bytes, &apiErr); err != nil {
+		return nil, errors.New("invalid json")
 	}
+	return apiErr, nil
+}
+
+func NewAPIError(message string, status int, err string, causes []interface{}) APIError {
+	return apiError{
+		message: message,
+		status:  status,
+		error:   err,
+		causes:  causes,
+	}
+}
+
+func NewBadRequestAPIError(message string, err error) APIError {
+	var causes []interface{}
 	if err != nil {
-		apiErr.Causes = append(apiErr.Causes, []interface{}{err.Error()})
+		causes = append(causes, err.Error())
 	}
-	return apiErr
+	return NewAPIError(
+		message,
+		http.StatusBadRequest,
+		"bad_request",
+		causes,
+	)
+}
+
+func NewUnauthorizedAPIError(message string, err error) APIError {
+	var causes []interface{}
+	if err != nil {
+		causes = append(causes, err.Error())
+	}
+	return NewAPIError(
+		message,
+		http.StatusUnauthorized,
+		"unauthorized",
+		causes,
+	)
+}
+
+func NewNotFoundAPIError(message string, err error) APIError {
+	var causes []interface{}
+	if err != nil {
+		causes = append(causes, err.Error())
+	}
+	return NewAPIError(
+		message,
+		http.StatusNotFound,
+		"not_found",
+		causes,
+	)
+}
+
+func NewInternalServerAPIError(message string, err error) APIError {
+	var causes []interface{}
+	if err != nil {
+		causes = append(causes, err.Error())
+	}
+	return NewAPIError(
+		message,
+		http.StatusInternalServerError,
+		"internal_server_error",
+		causes,
+	)
 }

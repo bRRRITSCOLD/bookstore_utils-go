@@ -11,7 +11,7 @@ const (
 	NO_ROWS = "sql: no rows in result set"
 )
 
-func ParseMySQLError(err error) *APIError {
+func ParseMySQLError(err error) APIError {
 	sqlErr, ok := err.(*mysql.MySQLError)
 	if !ok {
 		if strings.Contains(err.Error(), NO_ROWS) {
