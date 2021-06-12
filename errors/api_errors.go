@@ -57,7 +57,7 @@ func (e apiError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.JSON())
 }
 
-func (e apiError) UnmarshalJSON(b []byte) error {
+func (e *apiError) UnmarshalJSON(b []byte) error {
 	temp := e.JSON()
 
 	if err := json.Unmarshal(b, &temp); err != nil {
