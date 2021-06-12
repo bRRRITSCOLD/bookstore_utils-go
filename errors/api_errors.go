@@ -57,7 +57,7 @@ func (e apiError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.JSON())
 }
 
-func (e apiError) UnmarshalJSON(b []byte) error {
+func (e *apiError) UnmarshalJSON(b []byte) error {
 	temp := e.JSON()
 
 	if err := json.Unmarshal(b, &temp); err != nil {
@@ -86,11 +86,11 @@ func NewAPIErrorFromBytes(bytes []byte) (APIError, error) {
 	if err := apiErr.UnmarshalJSON(bytes); err != nil {
 		return nil, errors.New("invalid json")
 	}
-	return apiErr, nil
+	return &apiErr, nil
 }
 
 func NewAPIError(message string, status int, err string, causes []interface{}) APIError {
-	return apiError{
+	return &apiError{
 		message: message,
 		status:  status,
 		error:   err,
