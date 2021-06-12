@@ -12,13 +12,22 @@ type APIError interface {
 	Status() int
 	Error() string
 	Causes() []interface{}
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON([]byte) error
 }
 
 type apiError struct {
-	message string        `json:"message"`
-	status  int           `json:"status"`
-	error   string        `json:"error"`
-	causes  []interface{} `json:"causes"`
+	message string
+	status  int
+	error   string
+	causes  []interface{}
+}
+
+type APIErrorJSON struct {
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+	Error   string        `json:"error"`
+	Causes  []interface{} `json:"causes"`
 }
 
 func (e apiError) Message() string {
@@ -43,9 +52,33 @@ func (e apiError) Causes() []interface{} {
 	return e.causes
 }
 
+func (e apiError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(APIErrorJSON{
+		Message: e.message,
+		Status:  e.status,
+		Error:   e.error,
+		Causes:  e.causes,
+	})
+}
+
+func (e apiError) UnmarshalJSON(b []byte) error {
+	temp := &APIErrorJSON{}
+
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+
+	e.message = temp.Message
+	e.status = temp.Status
+	e.error = temp.Error
+	e.causes = temp.Causes
+
+	return nil
+}
+
 func NewAPIErrorFromBytes(bytes []byte) (APIError, error) {
 	var apiErr apiError
-	if err := json.Unmarshal(bytes, &apiErr); err != nil {
+	if err := apiErr.UnmarshalJSON(bytes); err != nil {
 		return nil, errors.New("invalid json")
 	}
 	return apiErr, nil
