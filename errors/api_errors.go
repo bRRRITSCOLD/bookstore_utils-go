@@ -14,6 +14,7 @@ type APIError interface {
 	Causes() []interface{}
 	MarshalJSON() ([]byte, error)
 	UnmarshalJSON([]byte) error
+	JSON() APIErrorJSON
 }
 
 type apiError struct {
@@ -53,16 +54,11 @@ func (e apiError) Causes() []interface{} {
 }
 
 func (e apiError) MarshalJSON() ([]byte, error) {
-	return json.Marshal(APIErrorJSON{
-		Message: e.message,
-		Status:  e.status,
-		Error:   e.error,
-		Causes:  e.causes,
-	})
+	return json.Marshal(e.JSON())
 }
 
 func (e apiError) UnmarshalJSON(b []byte) error {
-	temp := &APIErrorJSON{}
+	temp := e.JSON()
 
 	if err := json.Unmarshal(b, &temp); err != nil {
 		return err
@@ -74,6 +70,15 @@ func (e apiError) UnmarshalJSON(b []byte) error {
 	e.causes = temp.Causes
 
 	return nil
+}
+
+func (e apiError) JSON() APIErrorJSON {
+	return APIErrorJSON{
+		Message: e.message,
+		Status:  e.status,
+		Error:   e.error,
+		Causes:  e.causes,
+	}
 }
 
 func NewAPIErrorFromBytes(bytes []byte) (APIError, error) {
